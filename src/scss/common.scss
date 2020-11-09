@@ -1,0 +1,74 @@
+.card {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-left: auto;
+  margin-right: auto;
+}
+.information {
+}
+.flag {
+  max-width: 200px;
+}
+.country-name {
+  font-size: 20px;
+}
+.flag-img {
+  display: block;
+  max-width: 300px;
+  max-height: 300px;
+
+  margin-left: 60px;
+  margin-top: 10px;
+}
+
+.form {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.list {
+  display: block;
+  max-width: 200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.gallery {
+  display: flex;
+  // flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  margin-left: auto;
+  margin-right: auto;
+}
+.picture,
+.photo-card {
+  display: block;
+  max-width: 300px;
+  padding: 20px;
+}
+
+.gallery-item {
+  list-style-type: none;
+}
+
+.stats {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.stats-item {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  padding: 5px;
+  margin: 0;
+}
+
+.stat-number {
+  padding-left: 7px;
+}
