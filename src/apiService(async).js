@@ -4,7 +4,8 @@ import * as basicLightbox from "basiclightbox";
 
 const searchBtn = document.querySelector(".searchBtn");
 const form = document.querySelector(".js-search-form");
-let bodyItem = document.querySelector(".js-gallery");
+let galleryItem = document.querySelector(".js-gallery");
+let bodyItem = document.querySelector("body");
 let previos = "";
 let pageNumber = 1;
 let scrollY;
@@ -20,15 +21,15 @@ async function fetchIt(keyword = "error", pageNumber) {
   return src;
 }
 
-function markupFirstSearch(keyword, pageNumber) {
-  //   let bodyItem = document.querySelector(".js-gallery");
+async function markupFirstSearch(keyword, pageNumber) {
+  //   let galleryItem = document.querySelector(".js-gallery");
 
-  fetchIt(keyword, pageNumber)
-    .then((src) => {
-      bodyItem.innerHTML = listTemplate(src);
-    })
-    .then(createLoadMoreBtn)
-    .then(createListener);
+  const src = await fetchIt(keyword, pageNumber);
+
+  galleryItem.innerHTML = listTemplate(src);
+
+  createLoadMoreBtn();
+  createListener();
 }
 
 function onSubmitBtnClick(event) {
@@ -46,7 +47,7 @@ function onSubmitBtnClick(event) {
 }
 
 function createLoadMoreBtn() {
-  bodyItem.insertAdjacentHTML("beforeend", buttonLoadMore());
+  galleryItem.insertAdjacentHTML("beforeend", buttonLoadMore());
   let loadMoreBtn = document.querySelector(".js-loadMoreBtn");
 
   //   console.log("createLoadMoreBtn -> loadMoreBtn", loadMoreBtn);
@@ -57,9 +58,9 @@ function createLoadMoreBtn() {
 
 function onLoadMoreBtnClick(e) {
   e.preventDefault();
-  console.log("onLoadMoreBtnClick");
+  // console.log("onLoadMoreBtnClick");
   let query = form.elements.query.value;
-  console.log("onLoadMoreBtnClick -> query", query);
+  // console.log("onLoadMoreBtnClick -> query", query);
   pageNumber += 1;
 
   markupMoreSearch(query, pageNumber).then(() => setTimeout(scroll, 1000));
@@ -69,7 +70,7 @@ function onLoadMoreBtnClick(e) {
 
 function scroll() {
   scrollY += window.innerHeight;
-  console.log(scrollY);
+  // console.log(scrollY);
   window.scrollTo({
     top: scrollY,
     left: 0,
@@ -77,19 +78,15 @@ function scroll() {
   });
 }
 
-function markupMoreSearch(keyword, pageNumber) {
-  //   let bodyItem = document.querySelector(".js-gallery");
+async function markupMoreSearch(keyword, pageNumber) {
+  //   let galleryItem = document.querySelector(".js-gallery");
 
-  return fetchIt(keyword, pageNumber)
-    .then((src) => {
-      console.log(src);
-      bodyItem.insertAdjacentHTML("beforeend", listTemplate(src));
-    })
-    .then(() => {
-      deleteOldLoadMoreBtn();
-      createLoadMoreBtn();
-      createListener();
-    });
+  const src = await fetchIt(keyword, pageNumber);
+  // console.log(src);
+  galleryItem.insertAdjacentHTML("beforeend", listTemplate(src));
+  deleteOldLoadMoreBtn();
+  createLoadMoreBtn();
+  createListener();
 }
 
 function deleteOldLoadMoreBtn() {
@@ -100,19 +97,25 @@ function deleteOldLoadMoreBtn() {
 
 function createListener() {
   const allGalleryCards = document.querySelector(".js-gallery");
-  console.log("createListener -> allGalleryCards", allGalleryCards);
 
   allGalleryCards.addEventListener("click", onCardClick);
 }
 
 function onCardClick(e) {
   if (e.target.nodeName === "IMG") {
-    console.log(e.target.dataset.large);
-
     const instance = basicLightbox.create(`
- <img src=${e.target.dataset.large} alt=${e.target.dataset.large}/>
+ <img class="lightbox-image" src=${e.target.dataset.large} alt=${e.target.dataset.large}/>
 `);
 
     instance.show();
+    const lightboxImg = document.querySelector(".lightbox-image");
+    document.body.style.overflow = "hidden";
+    event.stopPropagation();
+    document.addEventListener("click", onBackdropClick);
   }
+}
+
+function onBackdropClick(e) {
+  document.body.style.overflow = "scroll";
+  document.removeEventListener("click", onBackdropClick);
 }

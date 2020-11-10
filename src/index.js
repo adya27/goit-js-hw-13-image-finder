@@ -14,6 +14,5 @@ import "basiclightbox/dist/basicLightbox.min.css";
 
 // pnotify--
 
-// import "./apiService.js";
+// import "./apiService(promise).js";
 import "./apiService(async).js";
-// import "./code.js";
