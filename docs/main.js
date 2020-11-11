@@ -4505,9 +4505,10 @@ function _fetchIt() {
 
           case 10:
             src = _context.sent;
+            console.log("fetchIt -> src", src);
             return _context.abrupt("return", src);
 
-          case 12:
+          case 13:
           case "end":
             return _context.stop();
         }
@@ -4534,8 +4535,12 @@ function _markupFirstSearch() {
           case 2:
             src = _context2.sent;
             galleryItem.innerHTML = list_default()(src);
-            createLoadMoreBtn();
-            createListener();
+            console.log("markupFirstSearch -> src.length", src.length);
+
+            if (src.length === 12) {
+              createLoadMoreBtn();
+              createListener();
+            }
 
           case 6:
           case "end":
@@ -4549,17 +4554,17 @@ function _markupFirstSearch() {
 
 function onSubmitBtnClick(event) {
   event.preventDefault();
-  var query = apiService_async_form.elements.query.value;
+  var query = apiService_async_form.elements.query.value; // if (previos === query) {
+  //   pageNumber += 1;
+  // } else {
+  //   pageNumber = 1;
+  // }
 
-  if (previos === query) {
-    pageNumber += 1;
-  } else {
-    pageNumber = 1;
-  }
+  pageNumber = 1; //
 
   markupFirstSearch(query, pageNumber);
   previos = query;
-  scrollY = 300;
+  scrollY = 0;
 }
 
 function createLoadMoreBtn() {
@@ -4581,13 +4586,31 @@ function onLoadMoreBtnClick(e) {
 }
 
 function apiService_async_scroll() {
-  scrollY += window.innerHeight; // console.log(scrollY);
+  return _scroll.apply(this, arguments);
+}
 
-  window.scrollTo({
-    top: scrollY,
-    left: 0,
-    behavior: "smooth"
-  });
+function _scroll() {
+  _scroll = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3() {
+    return regeneratorRuntime.wrap(function _callee3$(_context3) {
+      while (1) {
+        switch (_context3.prev = _context3.next) {
+          case 0:
+            scrollY += document.body.scrollHeight; // console.log(scrollY);
+
+            window.scrollTo({
+              top: scrollY,
+              left: 0,
+              behavior: "smooth"
+            });
+
+          case 2:
+          case "end":
+            return _context3.stop();
+        }
+      }
+    }, _callee3);
+  }));
+  return _scroll.apply(this, arguments);
 }
 
 function markupMoreSearch(_x5, _x6) {
@@ -4595,29 +4618,33 @@ function markupMoreSearch(_x5, _x6) {
 }
 
 function _markupMoreSearch() {
-  _markupMoreSearch = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(keyword, pageNumber) {
+  _markupMoreSearch = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(keyword, pageNumber) {
     var src;
-    return regeneratorRuntime.wrap(function _callee3$(_context3) {
+    return regeneratorRuntime.wrap(function _callee4$(_context4) {
       while (1) {
-        switch (_context3.prev = _context3.next) {
+        switch (_context4.prev = _context4.next) {
           case 0:
-            _context3.next = 2;
+            _context4.next = 2;
             return fetchIt(keyword, pageNumber);
 
           case 2:
-            src = _context3.sent;
+            src = _context4.sent;
             // console.log(src);
             galleryItem.insertAdjacentHTML("beforeend", list_default()(src));
             deleteOldLoadMoreBtn();
-            createLoadMoreBtn();
-            createListener();
 
-          case 7:
+            if (src.length === 12) {
+              createLoadMoreBtn();
+              createListener();
+            } // await scroll();
+
+
+          case 6:
           case "end":
-            return _context3.stop();
+            return _context4.stop();
         }
       }
-    }, _callee3);
+    }, _callee4);
   }));
   return _markupMoreSearch.apply(this, arguments);
 }
@@ -4660,7 +4687,7 @@ function onBackdropClick(e) {
 // pnotify--
 // import "./apiService(promise).js";
 
-
+ // import "./apiService(infinite-scroll-async).js";
 })();
 
 /******/ })()
