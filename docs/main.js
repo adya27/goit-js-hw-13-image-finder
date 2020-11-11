@@ -4534,15 +4534,14 @@ function _markupFirstSearch() {
 
           case 2:
             src = _context2.sent;
-            galleryItem.innerHTML = list_default()(src);
-            console.log("markupFirstSearch -> src.length", src.length);
+            galleryItem.innerHTML = list_default()(src); // console.log("markupFirstSearch -> src.length", src.length);
 
             if (src.length === 12) {
               createLoadMoreBtn();
               createListener();
             }
 
-          case 6:
+          case 5:
           case "end":
             return _context2.stop();
         }

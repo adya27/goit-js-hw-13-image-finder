@@ -28,7 +28,7 @@ async function markupFirstSearch(keyword, pageNumber) {
   const src = await fetchIt(keyword, pageNumber);
 
   galleryItem.innerHTML = listTemplate(src);
-  console.log("markupFirstSearch -> src.length", src.length);
+  // console.log("markupFirstSearch -> src.length", src.length);
   if (src.length === 12) {
     createLoadMoreBtn();
     createListener();
