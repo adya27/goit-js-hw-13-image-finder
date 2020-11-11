@@ -40,6 +40,7 @@
     "handlebars-loader": "^1.7.1",
     "handlebars-webpack-plugin": "^2.2.1",
     "html-webpack-plugin": "^4.5.0",
+    "infinite-scroll": "^3.0.6",
     "lodash.debounce": "^4.0.8",
     "mini-css-extract-plugin": "^1.2.1",
     "pnotify": "^5.1.2",

@@ -1,0 +1,26 @@
+<div class="gallery container">
+    {{#each this}}
+    <article class="gallery-item post">
+        <img class="photo-card" src={{this.webformatURL}} alt={{this.webformatURL}} data-large={{this.largeImageURL}} />
+
+        <div class="stats">
+            <p class="stats-item">
+                <i class="material-icons">thumb_up</i>
+                <span class="stat-number">{{this.likes}}</span>
+            </p>
+            <p class="stats-item">
+                <i class="material-icons">visibility</i>
+                <span class="stat-number"></span>{{this.views}}</span>
+            </p>
+            <p class="stats-item">
+                <i class="material-icons">comment</i>
+                <span class="stat-number"></span>{{this.comments}}</span>
+            </p>
+            <p class="stats-item">
+                <i class="material-icons">cloud_download</i>
+                <span class="stat-number"></span>{{this.downloads}}</span>
+            </p>
+        </div>
+    </article>
+    {{/each}}
+</div>

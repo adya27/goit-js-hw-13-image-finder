@@ -1,4 +1,4 @@
-import listTemplate from "./templates/list.hbs";
+import listTemplate from "./templates/list-for-infinite-scroll.hbs";
 import buttonLoadMore from "./templates/buttonLoadMore.hbs";
 import * as basicLightbox from "basiclightbox";
 
@@ -10,15 +10,23 @@ let previos = "";
 let pageNumber = 1;
 let scrollY;
 
+var elem = document.querySelector(".container");
+var infScroll = new InfiniteScroll(elem, {
+  // options
+  path: ".pagination__next",
+  append: ".post",
+  history: false,
+});
+
 form.addEventListener("submit", onSubmitBtnClick);
 
 async function fetchIt(keyword = "error", pageNumber) {
-  let url = `https://pixabay.com/api/?image_type=photo&orientation=horizontal&q=${keyword}&page=${pageNumber}&per_page=12&key=17537629-2ee3a1e1cfb1c48a1e1039472`;
+  let url = `https://pixabay.com/api/?image_type=photo&orientation=horizontal&q=${keyword}&key=17537629-2ee3a1e1cfb1c48a1e1039472`;
+  // let url = `https://pixabay.com/api/?image_type=photo&orientation=horizontal&q=${keyword}&page=${pageNumber}&per_page=12&key=17537629-2ee3a1e1cfb1c48a1e1039472`;
   const urlFetch = await fetch(url);
   const response = await urlFetch.json();
   const src = await response.hits;
 
-  console.log("fetchIt -> src", src);
   return src;
 }
 
@@ -28,27 +36,23 @@ async function markupFirstSearch(keyword, pageNumber) {
   const src = await fetchIt(keyword, pageNumber);
 
   galleryItem.innerHTML = listTemplate(src);
-  console.log("markupFirstSearch -> src.length", src.length);
-  if (src.length === 12) {
-    createLoadMoreBtn();
-    createListener();
-  }
+
+  createLoadMoreBtn();
+  createListener();
 }
 
 function onSubmitBtnClick(event) {
   event.preventDefault();
   let query = form.elements.query.value;
-  // if (previos === query) {
-  //   pageNumber += 1;
-  // } else {
-  //   pageNumber = 1;
-  // }
-  pageNumber = 1;
-  //
+  if (previos === query) {
+    pageNumber += 1;
+  } else {
+    pageNumber = 1;
+  }
   markupFirstSearch(query, pageNumber);
 
   previos = query;
-  scrollY = 0;
+  scrollY = 300;
 }
 
 function createLoadMoreBtn() {
@@ -73,8 +77,8 @@ function onLoadMoreBtnClick(e) {
   //   createLoadMoreBtn();
 }
 
-async function scroll() {
-  scrollY += document.body.scrollHeight;
+function scroll() {
+  scrollY += window.innerHeight;
   // console.log(scrollY);
   window.scrollTo({
     top: scrollY,
@@ -90,12 +94,8 @@ async function markupMoreSearch(keyword, pageNumber) {
   // console.log(src);
   galleryItem.insertAdjacentHTML("beforeend", listTemplate(src));
   deleteOldLoadMoreBtn();
-
-  if (src.length === 12) {
-    createLoadMoreBtn();
-    createListener();
-  }
-  // await scroll();
+  createLoadMoreBtn();
+  createListener();
 }
 
 function deleteOldLoadMoreBtn() {
