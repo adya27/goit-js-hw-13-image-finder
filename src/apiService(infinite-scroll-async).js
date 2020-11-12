@@ -1,4 +1,4 @@
-import listTemplate from "./templates/list-for-infinite-scroll.hbs";
+import listTemplate from "./templates/list.hbs";
 import buttonLoadMore from "./templates/buttonLoadMore.hbs";
 import * as basicLightbox from "basiclightbox";
 
@@ -10,98 +10,50 @@ let previos = "";
 let pageNumber = 1;
 let scrollY;
 
-var elem = document.querySelector(".container");
-var infScroll = new InfiniteScroll(elem, {
-  // options
-  path: ".pagination__next",
-  append: ".post",
-  history: false,
-});
-
 form.addEventListener("submit", onSubmitBtnClick);
 
 async function fetchIt(keyword = "error", pageNumber) {
-  let url = `https://pixabay.com/api/?image_type=photo&orientation=horizontal&q=${keyword}&key=17537629-2ee3a1e1cfb1c48a1e1039472`;
-  // let url = `https://pixabay.com/api/?image_type=photo&orientation=horizontal&q=${keyword}&page=${pageNumber}&per_page=12&key=17537629-2ee3a1e1cfb1c48a1e1039472`;
+  let url = `https://pixabay.com/api/?image_type=photo&orientation=horizontal&q=${keyword}&page=${pageNumber}&per_page=12&key=17537629-2ee3a1e1cfb1c48a1e1039472`;
   const urlFetch = await fetch(url);
   const response = await urlFetch.json();
   const src = await response.hits;
 
+  // console.log("fetchIt -> src", src);
   return src;
 }
 
 async function markupFirstSearch(keyword, pageNumber) {
-  //   let galleryItem = document.querySelector(".js-gallery");
+  let canFetch = true;
 
   const src = await fetchIt(keyword, pageNumber);
 
   galleryItem.innerHTML = listTemplate(src);
 
-  createLoadMoreBtn();
-  createListener();
+  const sentinel = document.querySelector("#sentinel");
+  infiniteLoad();
 }
 
 function onSubmitBtnClick(event) {
   event.preventDefault();
   let query = form.elements.query.value;
-  if (previos === query) {
-    pageNumber += 1;
-  } else {
-    pageNumber = 1;
-  }
+
+  pageNumber = 1;
+
   markupFirstSearch(query, pageNumber);
 
   previos = query;
-  scrollY = 300;
-}
-
-function createLoadMoreBtn() {
-  galleryItem.insertAdjacentHTML("beforeend", buttonLoadMore());
-  let loadMoreBtn = document.querySelector(".js-loadMoreBtn");
-
-  //   console.log("createLoadMoreBtn -> loadMoreBtn", loadMoreBtn);
-  loadMoreBtn.addEventListener("click", onLoadMoreBtnClick);
-
-  // let loadBtn = document.createElement("button");
-}
-
-function onLoadMoreBtnClick(e) {
-  e.preventDefault();
-  // console.log("onLoadMoreBtnClick");
-  let query = form.elements.query.value;
-  // console.log("onLoadMoreBtnClick -> query", query);
-  pageNumber += 1;
-
-  markupMoreSearch(query, pageNumber).then(() => setTimeout(scroll, 1000));
-
-  //   createLoadMoreBtn();
-}
-
-function scroll() {
-  scrollY += window.innerHeight;
-  // console.log(scrollY);
-  window.scrollTo({
-    top: scrollY,
-    left: 0,
-    behavior: "smooth",
-  });
+  scrollY = 0;
 }
 
 async function markupMoreSearch(keyword, pageNumber) {
-  //   let galleryItem = document.querySelector(".js-gallery");
-
+  pageNumber += 1;
   const src = await fetchIt(keyword, pageNumber);
-  // console.log(src);
-  galleryItem.insertAdjacentHTML("beforeend", listTemplate(src));
-  deleteOldLoadMoreBtn();
-  createLoadMoreBtn();
-  createListener();
-}
+  if (src.length >= 12) {
+    galleryItem.insertAdjacentHTML("beforeend", listTemplate(src));
+    createListener();
+  }
 
-function deleteOldLoadMoreBtn() {
-  let loadMoreBtn = document.querySelector(".js-loadMoreBtn");
-
-  loadMoreBtn.remove();
+  return src.length;
 }
 
 function createListener() {
@@ -127,4 +79,32 @@ function onCardClick(e) {
 function onBackdropClick(e) {
   document.body.style.overflow = "scroll";
   document.removeEventListener("click", onBackdropClick);
+}
+
+function infiniteLoad() {
+  sentinel.classList.add("sentinel");
+
+  // console.log("infiniteLoad -> sentinel", sentinel);
+
+  const sentinelC = document.querySelector(".sentinel");
+
+  const observer = new IntersectionObserver(callback, options);
+  observer.observe(sentinelC);
+  const options = {};
+
+  function callback(entries) {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        let query = form.elements.query.value;
+        // console.log("onLoadMoreBtnClick -> query", query);
+        pageNumber += 1;
+
+        markupMoreSearch(query, pageNumber).then((len) => {
+          if (len < 12) {
+            observer.unobserve(sentinelC);
+          }
+        });
+      }
+    });
+  }
 }

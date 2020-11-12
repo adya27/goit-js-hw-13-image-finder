@@ -46,6 +46,27 @@ module.exports = function (it) {
 
 /***/ }),
 
+/***/ 8533:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+"use strict";
+
+var $forEach = __webpack_require__(2092).forEach;
+var arrayMethodIsStrict = __webpack_require__(9341);
+var arrayMethodUsesToLength = __webpack_require__(9207);
+
+var STRICT_METHOD = arrayMethodIsStrict('forEach');
+var USES_TO_LENGTH = arrayMethodUsesToLength('forEach');
+
+// `Array.prototype.forEach` method implementation
+// https://tc39.github.io/ecma262/#sec-array.prototype.foreach
+module.exports = (!STRICT_METHOD || !USES_TO_LENGTH) ? function forEach(callbackfn /* , thisArg */) {
+  return $forEach(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
+} : [].forEach;
+
+
+/***/ }),
+
 /***/ 1318:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
@@ -80,6 +101,157 @@ module.exports = {
   // `Array.prototype.indexOf` method
   // https://tc39.github.io/ecma262/#sec-array.prototype.indexof
   indexOf: createMethod(false)
+};
+
+
+/***/ }),
+
+/***/ 2092:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+var bind = __webpack_require__(9974);
+var IndexedObject = __webpack_require__(8361);
+var toObject = __webpack_require__(7908);
+var toLength = __webpack_require__(7466);
+var arraySpeciesCreate = __webpack_require__(5417);
+
+var push = [].push;
+
+// `Array.prototype.{ forEach, map, filter, some, every, find, findIndex }` methods implementation
+var createMethod = function (TYPE) {
+  var IS_MAP = TYPE == 1;
+  var IS_FILTER = TYPE == 2;
+  var IS_SOME = TYPE == 3;
+  var IS_EVERY = TYPE == 4;
+  var IS_FIND_INDEX = TYPE == 6;
+  var NO_HOLES = TYPE == 5 || IS_FIND_INDEX;
+  return function ($this, callbackfn, that, specificCreate) {
+    var O = toObject($this);
+    var self = IndexedObject(O);
+    var boundFunction = bind(callbackfn, that, 3);
+    var length = toLength(self.length);
+    var index = 0;
+    var create = specificCreate || arraySpeciesCreate;
+    var target = IS_MAP ? create($this, length) : IS_FILTER ? create($this, 0) : undefined;
+    var value, result;
+    for (;length > index; index++) if (NO_HOLES || index in self) {
+      value = self[index];
+      result = boundFunction(value, index, O);
+      if (TYPE) {
+        if (IS_MAP) target[index] = result; // map
+        else if (result) switch (TYPE) {
+          case 3: return true;              // some
+          case 5: return value;             // find
+          case 6: return index;             // findIndex
+          case 2: push.call(target, value); // filter
+        } else if (IS_EVERY) return false;  // every
+      }
+    }
+    return IS_FIND_INDEX ? -1 : IS_SOME || IS_EVERY ? IS_EVERY : target;
+  };
+};
+
+module.exports = {
+  // `Array.prototype.forEach` method
+  // https://tc39.github.io/ecma262/#sec-array.prototype.foreach
+  forEach: createMethod(0),
+  // `Array.prototype.map` method
+  // https://tc39.github.io/ecma262/#sec-array.prototype.map
+  map: createMethod(1),
+  // `Array.prototype.filter` method
+  // https://tc39.github.io/ecma262/#sec-array.prototype.filter
+  filter: createMethod(2),
+  // `Array.prototype.some` method
+  // https://tc39.github.io/ecma262/#sec-array.prototype.some
+  some: createMethod(3),
+  // `Array.prototype.every` method
+  // https://tc39.github.io/ecma262/#sec-array.prototype.every
+  every: createMethod(4),
+  // `Array.prototype.find` method
+  // https://tc39.github.io/ecma262/#sec-array.prototype.find
+  find: createMethod(5),
+  // `Array.prototype.findIndex` method
+  // https://tc39.github.io/ecma262/#sec-array.prototype.findIndex
+  findIndex: createMethod(6)
+};
+
+
+/***/ }),
+
+/***/ 9341:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+"use strict";
+
+var fails = __webpack_require__(7293);
+
+module.exports = function (METHOD_NAME, argument) {
+  var method = [][METHOD_NAME];
+  return !!method && fails(function () {
+    // eslint-disable-next-line no-useless-call,no-throw-literal
+    method.call(null, argument || function () { throw 1; }, 1);
+  });
+};
+
+
+/***/ }),
+
+/***/ 9207:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+var DESCRIPTORS = __webpack_require__(9781);
+var fails = __webpack_require__(7293);
+var has = __webpack_require__(6656);
+
+var defineProperty = Object.defineProperty;
+var cache = {};
+
+var thrower = function (it) { throw it; };
+
+module.exports = function (METHOD_NAME, options) {
+  if (has(cache, METHOD_NAME)) return cache[METHOD_NAME];
+  if (!options) options = {};
+  var method = [][METHOD_NAME];
+  var ACCESSORS = has(options, 'ACCESSORS') ? options.ACCESSORS : false;
+  var argument0 = has(options, 0) ? options[0] : thrower;
+  var argument1 = has(options, 1) ? options[1] : undefined;
+
+  return cache[METHOD_NAME] = !!method && !fails(function () {
+    if (ACCESSORS && !DESCRIPTORS) return true;
+    var O = { length: -1 };
+
+    if (ACCESSORS) defineProperty(O, 1, { enumerable: true, get: thrower });
+    else O[1] = 1;
+
+    method.call(O, argument0, argument1);
+  });
+};
+
+
+/***/ }),
+
+/***/ 5417:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+var isObject = __webpack_require__(111);
+var isArray = __webpack_require__(3157);
+var wellKnownSymbol = __webpack_require__(5112);
+
+var SPECIES = wellKnownSymbol('species');
+
+// `ArraySpeciesCreate` abstract operation
+// https://tc39.github.io/ecma262/#sec-arrayspeciescreate
+module.exports = function (originalArray, length) {
+  var C;
+  if (isArray(originalArray)) {
+    C = originalArray.constructor;
+    // cross-realm fallback
+    if (typeof C == 'function' && (C === Array || isArray(C.prototype))) C = undefined;
+    else if (isObject(C)) {
+      C = C[SPECIES];
+      if (C === null) C = undefined;
+    }
+  } return new (C === undefined ? Array : C)(length === 0 ? 0 : length);
 };
 
 
@@ -273,6 +445,48 @@ var EXISTS = isObject(document) && isObject(document.createElement);
 
 module.exports = function (it) {
   return EXISTS ? document.createElement(it) : {};
+};
+
+
+/***/ }),
+
+/***/ 8324:
+/***/ ((module) => {
+
+// iterable DOM collections
+// flag - `iterable` interface - 'entries', 'keys', 'values', 'forEach' methods
+module.exports = {
+  CSSRuleList: 0,
+  CSSStyleDeclaration: 0,
+  CSSValueList: 0,
+  ClientRectList: 0,
+  DOMRectList: 0,
+  DOMStringList: 0,
+  DOMTokenList: 1,
+  DataTransferItemList: 0,
+  FileList: 0,
+  HTMLAllCollection: 0,
+  HTMLCollection: 0,
+  HTMLFormElement: 0,
+  HTMLSelectElement: 0,
+  MediaList: 0,
+  MimeTypeArray: 0,
+  NamedNodeMap: 0,
+  NodeList: 1,
+  PaintRequestList: 0,
+  Plugin: 0,
+  PluginArray: 0,
+  SVGLengthList: 0,
+  SVGNumberList: 0,
+  SVGPathSegList: 0,
+  SVGPointList: 0,
+  SVGStringList: 0,
+  SVGTransformList: 0,
+  SourceBufferList: 0,
+  StyleSheetList: 0,
+  TextTrackCueList: 0,
+  TextTrackList: 0,
+  TouchList: 0
 };
 
 
@@ -685,6 +899,20 @@ var ArrayPrototype = Array.prototype;
 // check on default Array iterator
 module.exports = function (it) {
   return it !== undefined && (Iterators.Array === it || ArrayPrototype[ITERATOR] === it);
+};
+
+
+/***/ }),
+
+/***/ 3157:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+var classof = __webpack_require__(4326);
+
+// `IsArray` abstract operation
+// https://tc39.github.io/ecma262/#sec-isarray
+module.exports = Array.isArray || function isArray(arg) {
+  return classof(arg) == 'Array';
 };
 
 
@@ -1517,6 +1745,20 @@ module.exports = function (argument) {
 
 /***/ }),
 
+/***/ 7908:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+var requireObjectCoercible = __webpack_require__(4488);
+
+// `ToObject` abstract operation
+// https://tc39.github.io/ecma262/#sec-toobject
+module.exports = function (argument) {
+  return Object(requireObjectCoercible(argument));
+};
+
+
+/***/ }),
+
 /***/ 7593:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
@@ -1600,6 +1842,23 @@ module.exports = function (name) {
     else WellKnownSymbolsStore[name] = createWellKnownSymbol('Symbol.' + name);
   } return WellKnownSymbolsStore[name];
 };
+
+
+/***/ }),
+
+/***/ 9554:
+/***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
+
+"use strict";
+
+var $ = __webpack_require__(2109);
+var forEach = __webpack_require__(8533);
+
+// `Array.prototype.forEach` method
+// https://tc39.github.io/ecma262/#sec-array.prototype.foreach
+$({ target: 'Array', proto: true, forced: [].forEach != forEach }, {
+  forEach: forEach
+});
 
 
 /***/ }),
@@ -2007,37 +2266,24 @@ $({ target: PROMISE, stat: true, forced: INCORRECT_ITERATION }, {
 
 /***/ }),
 
-/***/ 2564:
+/***/ 4747:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var $ = __webpack_require__(2109);
 var global = __webpack_require__(7854);
-var userAgent = __webpack_require__(8113);
+var DOMIterables = __webpack_require__(8324);
+var forEach = __webpack_require__(8533);
+var createNonEnumerableProperty = __webpack_require__(8880);
 
-var slice = [].slice;
-var MSIE = /MSIE .\./.test(userAgent); // <- dirty ie9- check
-
-var wrap = function (scheduler) {
-  return function (handler, timeout /* , ...arguments */) {
-    var boundArgs = arguments.length > 2;
-    var args = boundArgs ? slice.call(arguments, 2) : undefined;
-    return scheduler(boundArgs ? function () {
-      // eslint-disable-next-line no-new-func
-      (typeof handler == 'function' ? handler : Function(handler)).apply(this, args);
-    } : handler, timeout);
-  };
-};
-
-// ie9- setTimeout & setInterval additional parameters fix
-// https://html.spec.whatwg.org/multipage/timers-and-user-prompts.html#timers
-$({ global: true, bind: true, forced: MSIE }, {
-  // `setTimeout` method
-  // https://html.spec.whatwg.org/multipage/timers-and-user-prompts.html#dom-settimeout
-  setTimeout: wrap(global.setTimeout),
-  // `setInterval` method
-  // https://html.spec.whatwg.org/multipage/timers-and-user-prompts.html#dom-setinterval
-  setInterval: wrap(global.setInterval)
-});
+for (var COLLECTION_NAME in DOMIterables) {
+  var Collection = global[COLLECTION_NAME];
+  var CollectionPrototype = Collection && Collection.prototype;
+  // some Chrome versions have non-configurable methods on DOMTokenList
+  if (CollectionPrototype && CollectionPrototype.forEach !== forEach) try {
+    createNonEnumerableProperty(CollectionPrototype, 'forEach', forEach);
+  } catch (error) {
+    CollectionPrototype.forEach = forEach;
+  }
+}
 
 
 /***/ }),
@@ -4436,12 +4682,14 @@ try {
 (() => {
 "use strict";
 
+// EXTERNAL MODULE: ./node_modules/core-js/modules/es.array.for-each.js
+var es_array_for_each = __webpack_require__(9554);
 // EXTERNAL MODULE: ./node_modules/core-js/modules/es.object.to-string.js
 var es_object_to_string = __webpack_require__(1539);
 // EXTERNAL MODULE: ./node_modules/core-js/modules/es.promise.js
 var es_promise = __webpack_require__(8674);
-// EXTERNAL MODULE: ./node_modules/core-js/modules/web.timers.js
-var web_timers = __webpack_require__(2564);
+// EXTERNAL MODULE: ./node_modules/core-js/modules/web.dom-collections.for-each.js
+var web_dom_collections_for_each = __webpack_require__(4747);
 // EXTERNAL MODULE: ./node_modules/regenerator-runtime/runtime.js
 var runtime = __webpack_require__(5666);
 // EXTERNAL MODULE: ./src/templates/list.hbs
@@ -4449,10 +4697,10 @@ var list = __webpack_require__(1435);
 var list_default = /*#__PURE__*/__webpack_require__.n(list);
 // EXTERNAL MODULE: ./src/templates/buttonLoadMore.hbs
 var buttonLoadMore = __webpack_require__(3358);
-var buttonLoadMore_default = /*#__PURE__*/__webpack_require__.n(buttonLoadMore);
 // EXTERNAL MODULE: ./node_modules/basiclightbox/dist/basicLightbox.min.js
 var basicLightbox_min = __webpack_require__(27);
-// CONCATENATED MODULE: ./src/apiService(async).js
+// CONCATENATED MODULE: ./src/apiService(infinite-scroll-async).js
+
 
 
 
@@ -4466,13 +4714,13 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 
 
 var searchBtn = document.querySelector(".searchBtn");
-var apiService_async_form = document.querySelector(".js-search-form");
+var apiService_infinite_scroll_async_form = document.querySelector(".js-search-form");
 var galleryItem = document.querySelector(".js-gallery");
 var bodyItem = document.querySelector("body");
 var previos = "";
 var pageNumber = 1;
 var scrollY;
-apiService_async_form.addEventListener("submit", onSubmitBtnClick);
+apiService_infinite_scroll_async_form.addEventListener("submit", onSubmitBtnClick);
 
 function fetchIt(_x, _x2) {
   return _fetchIt.apply(this, arguments);
@@ -4505,10 +4753,9 @@ function _fetchIt() {
 
           case 10:
             src = _context.sent;
-            console.log("fetchIt -> src", src);
             return _context.abrupt("return", src);
 
-          case 13:
+          case 12:
           case "end":
             return _context.stop();
         }
@@ -4524,24 +4771,22 @@ function markupFirstSearch(_x3, _x4) {
 
 function _markupFirstSearch() {
   _markupFirstSearch = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(keyword, pageNumber) {
-    var src;
+    var canFetch, src, sentinel;
     return regeneratorRuntime.wrap(function _callee2$(_context2) {
       while (1) {
         switch (_context2.prev = _context2.next) {
           case 0:
-            _context2.next = 2;
+            canFetch = true;
+            _context2.next = 3;
             return fetchIt(keyword, pageNumber);
 
-          case 2:
+          case 3:
             src = _context2.sent;
-            galleryItem.innerHTML = list_default()(src); // console.log("markupFirstSearch -> src.length", src.length);
+            galleryItem.innerHTML = list_default()(src);
+            sentinel = document.querySelector("#sentinel");
+            infiniteLoad();
 
-            if (src.length === 12) {
-              createLoadMoreBtn();
-              createListener();
-            }
-
-          case 5:
+          case 7:
           case "end":
             return _context2.stop();
         }
@@ -4553,63 +4798,11 @@ function _markupFirstSearch() {
 
 function onSubmitBtnClick(event) {
   event.preventDefault();
-  var query = apiService_async_form.elements.query.value; // if (previos === query) {
-  //   pageNumber += 1;
-  // } else {
-  //   pageNumber = 1;
-  // }
-
-  pageNumber = 1; //
-
+  var query = apiService_infinite_scroll_async_form.elements.query.value;
+  pageNumber = 1;
   markupFirstSearch(query, pageNumber);
   previos = query;
   scrollY = 0;
-}
-
-function createLoadMoreBtn() {
-  galleryItem.insertAdjacentHTML("beforeend", buttonLoadMore_default()());
-  var loadMoreBtn = document.querySelector(".js-loadMoreBtn"); //   console.log("createLoadMoreBtn -> loadMoreBtn", loadMoreBtn);
-
-  loadMoreBtn.addEventListener("click", onLoadMoreBtnClick); // let loadBtn = document.createElement("button");
-}
-
-function onLoadMoreBtnClick(e) {
-  e.preventDefault(); // console.log("onLoadMoreBtnClick");
-
-  var query = apiService_async_form.elements.query.value; // console.log("onLoadMoreBtnClick -> query", query);
-
-  pageNumber += 1;
-  markupMoreSearch(query, pageNumber).then(function () {
-    return setTimeout(apiService_async_scroll, 1000);
-  }); //   createLoadMoreBtn();
-}
-
-function apiService_async_scroll() {
-  return _scroll.apply(this, arguments);
-}
-
-function _scroll() {
-  _scroll = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3() {
-    return regeneratorRuntime.wrap(function _callee3$(_context3) {
-      while (1) {
-        switch (_context3.prev = _context3.next) {
-          case 0:
-            scrollY += document.body.scrollHeight; // console.log(scrollY);
-
-            window.scrollTo({
-              top: scrollY,
-              left: 0,
-              behavior: "smooth"
-            });
-
-          case 2:
-          case "end":
-            return _context3.stop();
-        }
-      }
-    }, _callee3);
-  }));
-  return _scroll.apply(this, arguments);
 }
 
 function markupMoreSearch(_x5, _x6) {
@@ -4617,40 +4810,34 @@ function markupMoreSearch(_x5, _x6) {
 }
 
 function _markupMoreSearch() {
-  _markupMoreSearch = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(keyword, pageNumber) {
+  _markupMoreSearch = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(keyword, pageNumber) {
     var src;
-    return regeneratorRuntime.wrap(function _callee4$(_context4) {
+    return regeneratorRuntime.wrap(function _callee3$(_context3) {
       while (1) {
-        switch (_context4.prev = _context4.next) {
+        switch (_context3.prev = _context3.next) {
           case 0:
-            _context4.next = 2;
+            pageNumber += 1;
+            _context3.next = 3;
             return fetchIt(keyword, pageNumber);
 
-          case 2:
-            src = _context4.sent;
-            // console.log(src);
-            galleryItem.insertAdjacentHTML("beforeend", list_default()(src));
-            deleteOldLoadMoreBtn();
+          case 3:
+            src = _context3.sent;
 
-            if (src.length === 12) {
-              createLoadMoreBtn();
+            if (src.length >= 12) {
+              galleryItem.insertAdjacentHTML("beforeend", list_default()(src));
               createListener();
-            } // await scroll();
+            }
 
+            return _context3.abrupt("return", src.length);
 
           case 6:
           case "end":
-            return _context4.stop();
+            return _context3.stop();
         }
       }
-    }, _callee4);
+    }, _callee3);
   }));
   return _markupMoreSearch.apply(this, arguments);
-}
-
-function deleteOldLoadMoreBtn() {
-  var loadMoreBtn = document.querySelector(".js-loadMoreBtn");
-  loadMoreBtn.remove();
 }
 
 function createListener() {
@@ -4673,6 +4860,30 @@ function onBackdropClick(e) {
   document.body.style.overflow = "scroll";
   document.removeEventListener("click", onBackdropClick);
 }
+
+function infiniteLoad() {
+  sentinel.classList.add("sentinel"); // console.log("infiniteLoad -> sentinel", sentinel);
+
+  var sentinelC = document.querySelector(".sentinel");
+  var observer = new IntersectionObserver(callback, options);
+  observer.observe(sentinelC);
+  var options = {};
+
+  function callback(entries) {
+    entries.forEach(function (entry) {
+      if (entry.isIntersecting) {
+        var query = apiService_infinite_scroll_async_form.elements.query.value; // console.log("onLoadMoreBtnClick -> query", query);
+
+        pageNumber += 1;
+        markupMoreSearch(query, pageNumber).then(function (len) {
+          if (len < 12) {
+            observer.unobserve(sentinelC);
+          }
+        });
+      }
+    });
+  }
+}
 // CONCATENATED MODULE: ./src/index.js
 // import cardTemplate from "./templates/card.hbs";
 // import listTemplate from "./templates/list.hbs";
@@ -4685,8 +4896,9 @@ function onBackdropClick(e) {
 // import { notice, error } from "@pnotify/core";
 // pnotify--
 // import "./apiService(promise).js";
+// import "./apiService(async).js";
 
- // import "./apiService(infinite-scroll-async).js";
+
 })();
 
 /******/ })()
