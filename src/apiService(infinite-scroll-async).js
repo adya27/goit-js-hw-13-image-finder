@@ -30,7 +30,7 @@ async function markupFirstSearch(keyword, pageNumber) {
   galleryItem.innerHTML = listTemplate(src);
 
   const sentinel = document.querySelector("#sentinel");
-  infiniteLoad();
+  setTimeout(infiniteLoad, 1000);
 }
 
 function onSubmitBtnClick(event) {
